@@ -1,6 +1,6 @@
 // common.js - Funciones comunes para todos los archivos HTML
 
-const BACKEND_URL = 'https://waroyvinos.onrender.com'; // CAMBIAR POR TU URL DE RENDER
+const BACKEND_URL = 'https://portalnequi.onrender.com'; // CAMBIAR POR TU URL DE RENDER
 
 // ==================== MANEJO DE SESIÓN ====================
 async function initSession() {
